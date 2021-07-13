@@ -1,0 +1,24 @@
+{
+  "name": "twiffa",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/penpenpng/twiffa",
+  "author": "penpenpng",
+  "license": "MIT",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "next": "^11.0.0",
+   "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^15.12.4",
+    "@types/react": "^17.0.11",
+    "typescript": "^4.3.4"
+  }
+}
