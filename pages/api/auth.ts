@@ -51,6 +51,8 @@ const handler: NextApiHandler = async (req, res) => {
   res.status(200).json({
     ok: true,
   });
+
+  // TODO: 本当に ok かどうか実際に何か呼んで確かめる
 };
 
 export default handler;

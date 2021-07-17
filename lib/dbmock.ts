@@ -1,3 +1,5 @@
+// TODO: server less functioon はプロセスを共有しないのでこれは動かない。実際の DB に切り替える
+
 const database: Credentials[] = [];
 
 export const getCredentials = (sessionId: string): Credentials | undefined => {

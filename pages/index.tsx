@@ -33,7 +33,7 @@ const page: FunctionComponent<Props> = ({ message }) => {
   return <h1>Hello World: {message}</h1>;
 };
 
-// XXX: よく考えたら iron-session じゃなくて nookie で十分感ある
+// XXX: よく考えたら iron-session じゃなくて nookie で十分感ある。あるいは全部 iron-session にしちゃうか
 export const getServerSideProps = withSession<Props>(async ({ req }) => {
   const sessionId = getSessionId(req.session);
   const credentials =
