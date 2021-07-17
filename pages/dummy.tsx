@@ -30,7 +30,7 @@ const page: FunctionComponent<Props> = ({ message }) => {
 };
 
 export const getServerSideProps = withSession<Props>(async ({ req }) => {
-  getSessionId(req.session);
+  await getSessionId(req.session);
 
   return {
     props: { message: "ok!" },
