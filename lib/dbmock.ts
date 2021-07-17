@@ -29,5 +29,9 @@ export const updateCredentials = (
 
 export const getCredentialsByRequestToken = (
   requestToken: string
-): Credentials | undefined =>
-  requestToken && database.find((e) => e.requestToken === requestToken);
+): Credentials | undefined => {
+  console.log("getCredentialsByRequestToken:", requestToken);
+  console.log("database:", database);
+
+  return requestToken && database.find((e) => e.requestToken === requestToken);
+};
