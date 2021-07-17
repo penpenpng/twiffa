@@ -15,11 +15,13 @@ interface Props {
   message: string;
 }
 
-const getSessionId = (session: Session): string => {
+const getSessionId = async (session: Session): Promise<string> => {
   const SESSION_ID_KEY = "SESSION_ID";
 
   if (!session.get(SESSION_ID_KEY)) {
+    console.log("session ID not found. created.");
     session.set(SESSION_ID_KEY, uuid());
+    await session.save();
   }
 
   const id = session.get(SESSION_ID_KEY);
@@ -35,7 +37,7 @@ const page: FunctionComponent<Props> = ({ message }) => {
 
 // XXX: よく考えたら iron-session じゃなくて nookie で十分感ある。あるいは全部 iron-session にしちゃうか
 export const getServerSideProps = withSession<Props>(async ({ req }) => {
-  const sessionId = getSessionId(req.session);
+  const sessionId = await getSessionId(req.session);
   const credentials =
     getCredentials(sessionId) || createEmptyCredentials(sessionId);
 
