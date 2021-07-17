@@ -9,12 +9,13 @@ interface Props {
 }
 
 // TODO: なんかセッションが機能してなさそうに見えるからこれデプロイして様子見てみる
-const getSessionId = (session: Session): string => {
+const getSessionId = async (session: Session): Promise<string> => {
   const SESSION_ID_KEY = "SESSION_ID";
 
   if (!session.get(SESSION_ID_KEY)) {
     console.log("session ID not found. created.");
     session.set(SESSION_ID_KEY, uuid());
+    await session.save();
   }
 
   const id = session.get(SESSION_ID_KEY);
