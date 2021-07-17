@@ -22,6 +22,9 @@ export const updateCredentials = (
     database.find((e) => e.sessionId === sessionId),
     credentials
   );
+
+  console.log("update:", sessionId, credentials);
+  console.log("current database:", database);
 };
 
 export const getCredentialsByRequestToken = (

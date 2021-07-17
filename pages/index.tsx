@@ -22,7 +22,11 @@ const getSessionId = (session: Session): string => {
     session.set(SESSION_ID_KEY, uuid());
   }
 
-  return session.get(SESSION_ID_KEY);
+  const id = session.get(SESSION_ID_KEY);
+
+  console.log("get session ID:", id);
+
+  return id;
 };
 
 const page: FunctionComponent<Props> = ({ message }) => {
