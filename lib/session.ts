@@ -1,6 +1,7 @@
 import { GetServerSideProps, NextApiHandler } from "next";
 import { withIronSession, Session } from "next-iron-session";
 import { v4 as uuid } from "uuid";
+import { touchCredentials } from "./firestore";
 
 const getSessionId = async (session: Session): Promise<string> => {
   const SESSION_ID_KEY = "SESSION_ID";
@@ -11,6 +12,8 @@ const getSessionId = async (session: Session): Promise<string> => {
   }
 
   const sessionId = session.get(SESSION_ID_KEY);
+
+  await touchCredentials(sessionId);
 
   console.log("session id:", sessionId);
 

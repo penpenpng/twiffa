@@ -15,6 +15,17 @@ export const getCredentials = async (
   return doc.data() as Credentials;
 };
 
+export const touchCredentials = async (sessionId: string): Promise<void> => {
+  await table.doc(sessionId).set(
+    {
+      sessionId,
+    },
+    {
+      merge: true,
+    }
+  );
+};
+
 export const createEmptyCredentials = async (
   sessionId: string
 ): Promise<void> => {
