@@ -55,6 +55,7 @@ const usingStoredToken =
     );
 
     // TODO もっとまじめにやる
+    // 400 台と rate limit のチェックは最低やる
     if (res.status !== 200) {
       throw {
         error: APIError.NO_ACCESS_TOKEN,
@@ -131,20 +132,39 @@ export const getAccessTokens = async (
 export const getRedirectURL = (requestToken: string): string =>
   `https://api.twitter.com/oauth/authorize?oauth_token=${requestToken}`;
 
-export const verifySessionRecord = usingStoredToken<undefined, any>((tokens) =>
-  createAxios(tokens).get<unknown>("/1.1/account/verify_record.json", {
-    params: {
-      include_email: false,
-    },
-  })
+/** https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/manage-account-settings/api-reference/get-account-verify_credentials */
+export const verifyCredentials = usingStoredToken<
+  undefined,
+  GetAccountResponse
+>((tokens) =>
+  createAxios(tokens).get<GetAccountResponse>(
+    "/1.1/account/verify_record.json",
+    {
+      params: {
+        include_email: false,
+      },
+    }
+  )
 );
 
-export const getFollowers = usingStoredToken<{ id: string }, any>(
-  (tokens, { id }) =>
-    createAxios(tokens).get<unknown>(`/2/users/${id}/followers`)
+/** https://developer.twitter.com/en/docs/twitter-api/users/follows/api-reference/get-users-id-followers */
+export const getFollowers = usingStoredToken<GetUsersRequest, GetUsersResponse>(
+  (tokens, { id, pageToken }) =>
+    createAxios(tokens).get<GetUsersResponse>(`/2/users/${id}/followers`, {
+      params: {
+        pagination_token: pageToken,
+        max_results: 1000,
+      },
+    })
 );
 
-export const getFollowing = usingStoredToken<{ id: string }, any>(
-  (tokens, { id }) =>
-    createAxios(tokens).get<unknown>(`/2/users/${id}/following`)
+/** https://developer.twitter.com/en/docs/twitter-api/users/follows/api-reference/get-users-id-following */
+export const getFollowing = usingStoredToken<GetUsersRequest, GetUsersResponse>(
+  (tokens, { id, pageToken }) =>
+    createAxios(tokens).get<GetUsersResponse>(`/2/users/${id}/following`, {
+      params: {
+        pagination_token: pageToken,
+        max_results: 1000,
+      },
+    })
 );
