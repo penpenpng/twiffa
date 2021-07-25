@@ -27,7 +27,15 @@ export const updateCredentials = async (
   sessionId: string,
   credentials: Partial<Credentials>
 ): Promise<void> => {
+  const olddoc = await table.doc(sessionId).get();
+
+  console.log(`merge ${credentials} into '${olddoc.data()}'`);
+
   await table.doc(sessionId).set(credentials, { merge: true });
+
+  const newdoc = await table.doc(sessionId).get();
+
+  console.log(`result in '${newdoc.data()}'`);
 };
 
 export const getCredentialsByRequestToken = async (

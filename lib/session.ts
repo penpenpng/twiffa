@@ -10,7 +10,11 @@ const getSessionId = async (session: Session): Promise<string> => {
     await session.save();
   }
 
-  return session.get(SESSION_ID_KEY);
+  const sessionId = session.get(SESSION_ID_KEY);
+
+  console.log("session id:", sessionId);
+
+  return sessionId;
 };
 
 const IRON_SESSION_OPTIONS = {
