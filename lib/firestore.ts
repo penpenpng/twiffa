@@ -18,9 +18,14 @@ export const getCredentials = async (
 export const createEmptyCredentials = async (
   sessionId: string
 ): Promise<void> => {
+  console.log(`create id '${sessionId}'`);
   await table.doc(sessionId).set({
     sessionId,
   });
+
+  const newdoc = await table.doc(sessionId).get();
+
+  console.log(`result in '${JSON.stringify(newdoc.data())}'`);
 };
 
 export const updateCredentials = async (
@@ -29,13 +34,17 @@ export const updateCredentials = async (
 ): Promise<void> => {
   const olddoc = await table.doc(sessionId).get();
 
-  console.log(`merge ${credentials} into '${olddoc.data()}'`);
+  console.log(
+    `merge '${JSON.stringify(credentials)}' into '${JSON.stringify(
+      olddoc.data()
+    )}'`
+  );
 
   await table.doc(sessionId).set(credentials, { merge: true });
 
   const newdoc = await table.doc(sessionId).get();
 
-  console.log(`result in '${newdoc.data()}'`);
+  console.log(`result in '${JSON.stringify(newdoc.data())}'`);
 };
 
 export const getCredentialsByRequestToken = async (
