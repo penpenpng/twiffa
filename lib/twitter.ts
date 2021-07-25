@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 import addOAuthInterceptor from "axios-oauth-1.0a";
 
-import { getCredentials, createEmptyCredentials } from "../lib/firestore";
+import { getSessionRecord } from "../lib/firestore";
 
 export const APIError = {
   NO_ACCESS_TOKEN: "NO_ACCESS_TOKEN",
@@ -36,14 +36,11 @@ const createAxios = (tokens?: OAuthTokens) => {
 const usingStoredToken =
   <Args, Response>(call: TwitterAPICall<Args, Response>) =>
   async (sessionId: string, args: Args) => {
-    const credentials =
-      (await getCredentials(sessionId)) ||
-      (await createEmptyCredentials(sessionId)) ||
-      (await getCredentials(sessionId));
+    const record = await getSessionRecord(sessionId);
 
     const hasAccessTokens = (c) => c.accessToken && c.accessTokenSecret;
 
-    if (!hasAccessTokens(credentials)) {
+    if (!hasAccessTokens(record)) {
       throw {
         error: APIError.NO_ACCESS_TOKEN,
       };
@@ -51,8 +48,8 @@ const usingStoredToken =
 
     const res = await call(
       {
-        oauthToken: credentials.accessToken,
-        oauthTokenSecret: credentials.accessTokenSecret,
+        oauthToken: record.accessToken,
+        oauthTokenSecret: record.accessTokenSecret,
       },
       args
     );
@@ -67,11 +64,14 @@ const usingStoredToken =
     return res.data;
   };
 
-export const getRequestTokens = async (): Promise<Partial<Credentials>> => {
+export const getRequestTokens = async (): Promise<{
+  requestToken: string;
+  requestTokenSecret: string;
+}> => {
   const { data } = await createAxios().post("/oauth/request_token");
 
   const tokens = Object.fromEntries(
-    data.split("&").map((credentials) => credentials.split("="))
+    data.split("&").map((record) => record.split("="))
   );
 
   if (tokens.oauth_callback_confirmed !== "true") {
@@ -99,7 +99,7 @@ export const getAccessTokens = async (
   tokens: OAuthTokens,
   requestToken: string,
   tokenVerifier: string
-): Promise<Partial<Credentials>> => {
+): Promise<{ accessToken: string; accessTokenSecret: string }> => {
   const { data } = await createAxios(tokens).post(
     "/oauth/access_token",
     undefined,
@@ -112,9 +112,7 @@ export const getAccessTokens = async (
   );
 
   const { oauth_token: accessToken, oauth_token_secret: accessTokenSecret } =
-    Object.fromEntries(
-      data.split("&").map((credentials) => credentials.split("="))
-    );
+    Object.fromEntries(data.split("&").map((record) => record.split("=")));
 
   if (typeof accessToken !== "string") {
     throw "Access token is not provided.";
@@ -133,8 +131,8 @@ export const getAccessTokens = async (
 export const getRedirectURL = (requestToken: string): string =>
   `https://api.twitter.com/oauth/authorize?oauth_token=${requestToken}`;
 
-export const verifyCredentials = usingStoredToken<undefined, any>((tokens) =>
-  createAxios(tokens).get<unknown>("/1.1/account/verify_credentials.json", {
+export const verifySessionRecord = usingStoredToken<undefined, any>((tokens) =>
+  createAxios(tokens).get<unknown>("/1.1/account/verify_record.json", {
     params: {
       include_email: false,
     },

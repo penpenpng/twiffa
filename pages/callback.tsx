@@ -2,8 +2,8 @@ import { GetServerSideProps } from "next";
 import { FunctionComponent } from "react";
 
 import {
-  getCredentialsByRequestToken,
-  updateCredentials,
+  getSessionRecordByRequestToken,
+  updateSessionRecord,
 } from "../lib/firestore";
 import { getAccessTokens } from "../lib/twitter";
 
@@ -14,12 +14,12 @@ const page: FunctionComponent = () => {
 export const getServerSideProps: GetServerSideProps = async ({ query }) => {
   const requestToken = query.oauth_token as string;
   const tokenVerifier = query.oauth_verifier as string;
-  const unverifiedCredentials = await getCredentialsByRequestToken(
+  const unverifiedSessionRecord = await getSessionRecordByRequestToken(
     requestToken
   );
 
   // If accessed by user or request token has been expired:
-  if (!requestToken || !tokenVerifier || !unverifiedCredentials) {
+  if (!requestToken || !tokenVerifier || !unverifiedSessionRecord) {
     return {
       redirect: {
         permanent: false,
@@ -30,14 +30,14 @@ export const getServerSideProps: GetServerSideProps = async ({ query }) => {
 
   const accessTokens = await getAccessTokens(
     {
-      oauthToken: unverifiedCredentials.requestToken,
-      oauthTokenSecret: unverifiedCredentials.requestTokenSecret,
+      oauthToken: unverifiedSessionRecord.requestToken,
+      oauthTokenSecret: unverifiedSessionRecord.requestTokenSecret,
     },
     requestToken,
     tokenVerifier
   );
 
-  await updateCredentials(unverifiedCredentials.sessionId, accessTokens);
+  await updateSessionRecord(unverifiedSessionRecord.sessionId, accessTokens);
 
   return {
     redirect: {

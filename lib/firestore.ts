@@ -1,66 +1,44 @@
 import firebase from "./firebase";
 
 const firestore = firebase.firestore();
-const table = firestore.collection("credentials");
+const table = firestore.collection("sessions");
 
-export const getCredentials = async (
+export const getSessionRecord = async (
   sessionId: string
-): Promise<Credentials | undefined> => {
+): Promise<SessionRecord | undefined> => {
   const doc = await table.doc(sessionId).get();
 
   if (!doc.exists) {
     return undefined;
   }
 
-  return doc.data() as Credentials;
+  return doc.data() as SessionRecord;
 };
 
-export const touchCredentials = async (sessionId: string): Promise<void> => {
-  await table.doc(sessionId).set(
-    {
-      sessionId,
-    },
-    {
-      merge: true,
-    }
-  );
+export const touchSessionRecord = async (sessionId: string): Promise<void> => {
+  await table.doc(sessionId).set({ sessionId }, { merge: true });
 };
 
-export const createEmptyCredentials = async (
-  sessionId: string
-): Promise<void> => {
-  console.log(`create id '${sessionId}'`);
-  await table.doc(sessionId).set({
-    sessionId,
-  });
-
-  const newdoc = await table.doc(sessionId).get();
-
-  console.log(`result in '${JSON.stringify(newdoc.data())}'`);
-};
-
-export const updateCredentials = async (
+export const updateSessionRecord = async (
   sessionId: string,
-  credentials: Partial<Credentials>
+  record: Partial<SessionRecord>
 ): Promise<void> => {
   const olddoc = await table.doc(sessionId).get();
 
   console.log(
-    `merge '${JSON.stringify(credentials)}' into '${JSON.stringify(
-      olddoc.data()
-    )}'`
+    `merge '${JSON.stringify(record)}' into '${JSON.stringify(olddoc.data())}'`
   );
 
-  await table.doc(sessionId).set(credentials, { merge: true });
+  await table.doc(sessionId).set(record, { merge: true });
 
   const newdoc = await table.doc(sessionId).get();
 
   console.log(`result in '${JSON.stringify(newdoc.data())}'`);
 };
 
-export const getCredentialsByRequestToken = async (
+export const getSessionRecordByRequestToken = async (
   requestToken: string
-): Promise<Credentials | undefined> => {
+): Promise<SessionRecord | undefined> => {
   const querySnapshot = await table
     .where("requestToken", "==", requestToken)
     .get();
@@ -75,5 +53,5 @@ export const getCredentialsByRequestToken = async (
     return undefined;
   }
 
-  return doc.data() as Credentials;
+  return doc.data() as SessionRecord;
 };

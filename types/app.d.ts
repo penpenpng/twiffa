@@ -1,4 +1,4 @@
-interface Credentials {
+interface SessionRecord {
   sessionId: string;
   requestToken?: string;
   requestTokenSecret?: string;
