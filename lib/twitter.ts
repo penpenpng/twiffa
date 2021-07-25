@@ -1,39 +1,77 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosResponse } from "axios";
 import addOAuthInterceptor from "axios-oauth-1.0a";
 
+import { getCredentials, createEmptyCredentials } from "../lib/firestore";
+
+export const APIError = {
+  NO_ACCESS_TOKEN: "NO_ACCESS_TOKEN",
+} as const;
+
 interface OAuthTokens {
-  oauthToken?: string;
-  oauthTokenSecret?: string;
+  oauthToken: string;
+  oauthTokenSecret: string;
 }
 
-export const createAxios = (tokens: OAuthTokens = {}) => {
+type TwitterAPICall<Args, Response> = (
+  tokens: OAuthTokens,
+  args: Args
+) => Promise<AxiosResponse<Response>>;
+
+const createAxios = (tokens?: OAuthTokens) => {
   const _axios = axios.create({
     baseURL: "https://api.twitter.com/",
-    validateStatus: () => true,
   });
 
   addOAuthInterceptor(_axios, {
     algorithm: "HMAC-SHA1",
     key: process.env.OAUTH_CONSUMER_KEY,
     secret: process.env.OAUTH_CONSUMER_SECRET,
-    token: tokens.oauthToken,
-    tokenSecret: tokens.oauthTokenSecret,
+    token: tokens?.oauthToken,
+    tokenSecret: tokens?.oauthTokenSecret,
   });
 
   return _axios;
 };
 
-export const getRequestTokens = async (
-  axios: AxiosInstance
-): Promise<Partial<Credentials>> => {
-  const res = await axios.post("/oauth/request_token");
+const usingStoredToken =
+  <Args, Response>(call: TwitterAPICall<Args, Response>) =>
+  async (sessionId: string, args: Args) => {
+    const credentials =
+      (await getCredentials(sessionId)) ||
+      (await createEmptyCredentials(sessionId)) ||
+      (await getCredentials(sessionId));
 
-  if (res.status !== 200) {
-    throw "Non-200 response";
-  }
+    const hasAccessTokens = (c) => c.accessToken && c.accessTokenSecret;
+
+    if (!hasAccessTokens(credentials)) {
+      throw {
+        error: APIError.NO_ACCESS_TOKEN,
+      };
+    }
+
+    const res = await call(
+      {
+        oauthToken: credentials.accessToken,
+        oauthTokenSecret: credentials.accessTokenSecret,
+      },
+      args
+    );
+
+    // TODO もっとまじめにやる
+    if (res.status !== 200) {
+      throw {
+        error: APIError.NO_ACCESS_TOKEN,
+      };
+    }
+
+    return res.data;
+  };
+
+export const getRequestTokens = async (): Promise<Partial<Credentials>> => {
+  const { data } = await createAxios().post("/oauth/request_token");
 
   const tokens = Object.fromEntries(
-    res.data.split("&").map((credentials) => credentials.split("="))
+    data.split("&").map((credentials) => credentials.split("="))
   );
 
   if (tokens.oauth_callback_confirmed !== "true") {
@@ -58,27 +96,25 @@ export const getRequestTokens = async (
 };
 
 export const getAccessTokens = async (
-  axios: AxiosInstance,
+  tokens: OAuthTokens,
   requestToken: string,
   tokenVerifier: string
 ): Promise<Partial<Credentials>> => {
-  const res = await axios.post("/oauth/access_token", undefined, {
-    params: {
-      oauth_token: requestToken,
-      oauth_verifier: tokenVerifier,
-    },
-  });
-
-  if (res.status !== 200) {
-    throw "Non-200 response";
-  }
-
-  const tokens = Object.fromEntries(
-    res.data.split("&").map((credentials) => credentials.split("="))
+  const { data } = await createAxios(tokens).post(
+    "/oauth/access_token",
+    undefined,
+    {
+      params: {
+        oauth_token: requestToken,
+        oauth_verifier: tokenVerifier,
+      },
+    }
   );
 
-  const accessToken = tokens.oauth_token;
-  const accessTokenSecret = tokens.oauth_token_secret;
+  const { oauth_token: accessToken, oauth_token_secret: accessTokenSecret } =
+    Object.fromEntries(
+      data.split("&").map((credentials) => credentials.split("="))
+    );
 
   if (typeof accessToken !== "string") {
     throw "Access token is not provided.";
@@ -96,3 +132,21 @@ export const getAccessTokens = async (
 
 export const getRedirectURL = (requestToken: string): string =>
   `https://api.twitter.com/oauth/authorize?oauth_token=${requestToken}`;
+
+export const verifyCredentials = usingStoredToken<undefined, any>((tokens) =>
+  createAxios(tokens).get<unknown>("/1.1/account/verify_credentials.json", {
+    params: {
+      include_email: false,
+    },
+  })
+);
+
+export const getFollowers = usingStoredToken<{ id: string }, any>(
+  (tokens, { id }) =>
+    createAxios(tokens).get<unknown>(`/2/users/${id}/followers`)
+);
+
+export const getFollowing = usingStoredToken<{ id: string }, any>(
+  (tokens, { id }) =>
+    createAxios(tokens).get<unknown>(`/2/users/${id}/following`)
+);
