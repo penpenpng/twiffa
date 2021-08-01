@@ -138,7 +138,7 @@ export const verifyCredentials = usingStoredToken<
   GetAccountResponse
 >((tokens) =>
   createAxios(tokens).get<GetAccountResponse>(
-    "/1.1/account/verify_record.json",
+    "/1.1/account/verify_credentials.json",
     {
       params: {
         include_email: false,

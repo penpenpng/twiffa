@@ -3,13 +3,24 @@ import { apiRouteWithSession } from "../../lib/session";
 import { getRedirectURL, getRequestTokens } from "../../lib/twitter";
 
 const handler = apiRouteWithSession(async (sessionId, req, res) => {
-  const tokens = await getRequestTokens();
+  if (process.env.APP_ENV === "local") {
+    await updateSessionRecord(sessionId, {
+      accessToken: process.env.OAUTH_ACCESS_TOKEN,
+      accessTokenSecret: process.env.OAUTH_ACCESS_SECRET,
+    });
 
-  await updateSessionRecord(sessionId, tokens);
+    res.status(200).json({
+      redirect: false,
+    });
+  } else {
+    const tokens = await getRequestTokens();
 
-  res.status(200).json({
-    redirect: getRedirectURL(tokens.requestToken),
-  });
+    await updateSessionRecord(sessionId, tokens);
+
+    res.status(200).json({
+      redirect: getRedirectURL(tokens.requestToken),
+    });
+  }
 });
 
 export default handler;
