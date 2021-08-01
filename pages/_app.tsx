@@ -1,5 +1,5 @@
-import React from "react";
 import { AppComponent } from "next/dist/next-server/lib/router/router";
+import React from "react";
 
 import "../styles/global.css";
 

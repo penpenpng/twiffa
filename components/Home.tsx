@@ -1,13 +1,20 @@
 import { FunctionComponent } from "react";
 
-export const component: FunctionComponent = () => {
+interface Prop {
+  goAuthPage: () => void;
+}
+
+export const component: FunctionComponent<Prop> = ({ goAuthPage }) => {
   return (
     <main className="w-screen flex flex-col items-center">
-      <p className="font-sans">
-        Twiffa はあなたの Twitter アカウントのフォロー/フォロワーの一覧を CSV
-        形式で出力します。
+      <p>
+        Twiffa はあなたの Twitter
+        アカウントのフォロー/フォロワーの一覧を取得し、CSV 形式で出力します。
+        利用には Twitter 認証が必要です。
       </p>
-      <button className="mt-4">出力する</button>
+      <button className="mt-4" onClick={goAuthPage}>
+        フォロー/フォロワーを取得する
+      </button>
     </main>
   );
 };

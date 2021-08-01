@@ -133,22 +133,20 @@ export const getRedirectURL = (requestToken: string): string =>
   `https://api.twitter.com/oauth/authorize?oauth_token=${requestToken}`;
 
 /** https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/manage-account-settings/api-reference/get-account-verify_credentials */
-export const verifyCredentials = usingStoredToken<
-  undefined,
-  GetAccountResponse
->((tokens) =>
-  createAxios(tokens).get<GetAccountResponse>(
-    "/1.1/account/verify_credentials.json",
-    {
-      params: {
-        include_email: false,
-      },
-    }
-  )
+const verifyCredentials = usingStoredToken<undefined, GetAccountResponse>(
+  (tokens) =>
+    createAxios(tokens).get<GetAccountResponse>(
+      "/1.1/account/verify_credentials.json",
+      {
+        params: {
+          include_email: false,
+        },
+      }
+    )
 );
 
 /** https://developer.twitter.com/en/docs/twitter-api/users/follows/api-reference/get-users-id-followers */
-export const getFollowers = usingStoredToken<GetUsersRequest, GetUsersResponse>(
+const getFollowers = usingStoredToken<GetUsersRequest, GetUsersResponse>(
   (tokens, { id, pageToken }) =>
     createAxios(tokens).get<GetUsersResponse>(`/2/users/${id}/followers`, {
       params: {
@@ -159,7 +157,7 @@ export const getFollowers = usingStoredToken<GetUsersRequest, GetUsersResponse>(
 );
 
 /** https://developer.twitter.com/en/docs/twitter-api/users/follows/api-reference/get-users-id-following */
-export const getFollowing = usingStoredToken<GetUsersRequest, GetUsersResponse>(
+const getFollowing = usingStoredToken<GetUsersRequest, GetUsersResponse>(
   (tokens, { id, pageToken }) =>
     createAxios(tokens).get<GetUsersResponse>(`/2/users/${id}/following`, {
       params: {
@@ -168,3 +166,33 @@ export const getFollowing = usingStoredToken<GetUsersRequest, GetUsersResponse>(
       },
     })
 );
+
+export const twiffa = async (sessionId: string): Promise<TwiffaResult> => {
+  // TODO
+  return {
+    name: "Sample Account",
+    followers: [
+      {
+        id: "ID",
+        name: "Follower",
+        username: "@Follower",
+      },
+      {
+        id: "ID",
+        name: "Follower",
+        username: "@Follower",
+      },
+      {
+        id: "ID",
+        name: "Follower",
+        username: "@Follower",
+      },
+      {
+        id: "ID",
+        name: "Follower",
+        username: "@Follower",
+      },
+    ],
+    following: [],
+  };
+};

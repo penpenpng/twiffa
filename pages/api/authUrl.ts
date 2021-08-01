@@ -18,7 +18,7 @@ const handler = apiRouteWithSession(async (sessionId, req, res) => {
     await updateSessionRecord(sessionId, tokens);
 
     res.status(200).json({
-      redirect: getRedirectURL(tokens.requestToken),
+      authUrl: getRedirectURL(tokens.requestToken),
     });
   }
 });

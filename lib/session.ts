@@ -31,7 +31,7 @@ const IRON_SESSION_OPTIONS = {
 export const getServerPropsWithSession = <T = any>(
   handler: (
     sessionId: string,
-    context: Parameters<GetServerSideProps<T>>
+    context: Parameters<GetServerSideProps<T>>[0]
   ) => ReturnType<GetServerSideProps<T>>
 ): GetServerSideProps<T> =>
   withIronSession(
