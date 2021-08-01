@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  a {
+    @apply underline text-blue-600 hover:text-blue-800 visited:text-purple-600;
+  }
+
+  button {
+    @apply bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded;
+  }
+}
+
+.app-title {
+  font-family: "Titillium Web", sans-serif;
+  font-weight: 300;
+  font-style: italic;
+}
