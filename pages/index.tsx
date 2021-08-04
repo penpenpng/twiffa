@@ -53,7 +53,8 @@ const page: FunctionComponent<Props> = ({ twiffaResult }) => {
 
 export const getServerSideProps: GetServerSideProps<Props> =
   getServerPropsWithSession(async (sessionId, { query }) => {
-    // If accessed by twitter auth server
+    // If returned from twitter auth page
+    // TODO: Error handling
     if (query.oauth_token && query.oauth_verifier) {
       const requestToken = query.oauth_token as string;
       const tokenVerifier = query.oauth_verifier as string;
@@ -79,8 +80,9 @@ export const getServerSideProps: GetServerSideProps<Props> =
       }
 
       return {
-        props: {
-          twiffaResult: undefined,
+        redirect: {
+          destination: "/",
+          permanent: false,
         },
       };
     }
