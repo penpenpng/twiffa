@@ -1,6 +1,7 @@
 // NOTE: Partial definition. To see full one, visit https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/manage-account-settings/api-reference/get-account-verify_credentials
 interface GetAccountResponse {
   id_str: string;
+  name: string;
   followers_count: number;
   friends_count: number;
 }

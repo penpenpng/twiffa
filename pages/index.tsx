@@ -1,5 +1,6 @@
 import { GetServerSideProps } from "next";
 import { FunctionComponent } from "react";
+import axios from "axios";
 
 import {
   getSessionRecordByRequestToken,
@@ -20,11 +21,28 @@ interface Props {
 const page: FunctionComponent<Props> = ({ twiffaResult }) => {
   if (!twiffaResult) return <div />;
 
+  const goAuthPage = async () => {
+    const { data } = await axios.get("api/authUrl", {
+      validateStatus: () => true,
+    });
+
+    if (data.authUrl) {
+      window.location.href = data.authUrl;
+      return;
+    }
+
+    alert(
+      `予期しないエラーが発生しました。数分おいてもう一度試しても引き続きエラーが発生する場合は、お手数ですが以下のエラーコードを管理人までお知らせください: ${
+        data.error || "UNHANDLED_ERROR"
+      }`
+    );
+  };
+
   return (
     <div className="h-screen">
       <Header />
       {twiffaResult.error === "NO_CREDENTIAL" ? (
-        <Home goAuthPage={() => console.log("fetch!")} />
+        <Home goAuthPage={goAuthPage} />
       ) : (
         <Result twiffaResult={twiffaResult} />
       )}

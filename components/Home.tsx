@@ -1,7 +1,7 @@
 import { FunctionComponent } from "react";
 
 interface Prop {
-  goAuthPage: () => void;
+  goAuthPage: () => Promise<void>;
 }
 
 export const Component: FunctionComponent<Prop> = ({ goAuthPage }) => {

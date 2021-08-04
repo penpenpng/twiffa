@@ -15,7 +15,13 @@ interface TwitterUser {
 
 interface TwiffaResult {
   name: string;
-  error?: "NO_CREDENTIAL" | "API_LIMIT" | "NOT_FOUND" | "INTERNAL_SERVER_ERROR";
+  error?: TwiffaError;
   following: TwitterUser[];
   followers: TwitterUser[];
 }
+
+type TwiffaError =
+  | "NO_CREDENTIAL"
+  | "API_LIMIT"
+  | "UNKNOWN_TWITTER_ERROR"
+  | "INTERNAL_SERVER_ERROR";

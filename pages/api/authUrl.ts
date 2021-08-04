@@ -13,13 +13,21 @@ const handler = apiRouteWithSession(async (sessionId, req, res) => {
       redirect: false,
     });
   } else {
-    const tokens = await getRequestTokens();
+    try {
+      const tokens = await getRequestTokens();
 
-    await updateSessionRecord(sessionId, tokens);
+      await updateSessionRecord(sessionId, tokens);
 
-    res.status(200).json({
-      authUrl: getRedirectURL(tokens.requestToken),
-    });
+      res.status(200).json({
+        authUrl: getRedirectURL(tokens.requestToken),
+      });
+    } catch (e) {
+      if (e.error === "UNKNOWN_TWITTER_ERROR") {
+        res.status(500).json({ error: "UNKNOWN_TWITTER_ERROR" });
+      } else {
+        res.status(500).json({ error: "INTERNAL_SERVER_ERROR" });
+      }
+    }
   }
 });
 

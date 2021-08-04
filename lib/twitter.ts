@@ -3,10 +3,6 @@ import addOAuthInterceptor from "axios-oauth-1.0a";
 
 import { getSessionRecord } from "../lib/firestore";
 
-export const APIError = {
-  NO_ACCESS_TOKEN: "NO_ACCESS_TOKEN",
-} as const;
-
 interface OAuthTokens {
   oauthToken: string;
   oauthTokenSecret: string;
@@ -17,9 +13,22 @@ type TwitterAPICall<Args, Response> = (
   args: Args
 ) => Promise<AxiosResponse<Response>>;
 
+type TwitterAPIError =
+  | "NO_ACCESS_TOKEN"
+  | "INVALID_ACCESS_TOKEN"
+  | "API_LIMIT"
+  | "UNKNOWN_TWITTER_ERROR";
+
+const throwTwitterAPIError = (error: TwitterAPIError): never => {
+  throw {
+    error,
+  };
+};
+
 const createAxios = (tokens?: OAuthTokens) => {
   const _axios = axios.create({
     baseURL: "https://api.twitter.com/",
+    validateStatus: () => true,
   });
 
   addOAuthInterceptor(_axios, {
@@ -41,9 +50,7 @@ const usingStoredToken =
     const hasAccessTokens = (c) => c.accessToken && c.accessTokenSecret;
 
     if (!hasAccessTokens(record)) {
-      throw {
-        error: APIError.NO_ACCESS_TOKEN,
-      };
+      throwTwitterAPIError("NO_ACCESS_TOKEN");
     }
 
     const res = await call(
@@ -54,12 +61,16 @@ const usingStoredToken =
       args
     );
 
-    // TODO もっとまじめにやる
-    // 400 台と rate limit のチェックは最低やる
-    if (res.status !== 200) {
-      throw {
-        error: APIError.NO_ACCESS_TOKEN,
-      };
+    if (res.status === 429) {
+      throwTwitterAPIError("API_LIMIT");
+    }
+
+    if (res.status === 401) {
+      throwTwitterAPIError("INVALID_ACCESS_TOKEN");
+    }
+
+    if (res.status !== 200 || (res.data as any).errors) {
+      throwTwitterAPIError("UNKNOWN_TWITTER_ERROR");
     }
 
     return res.data;
@@ -69,6 +80,7 @@ export const getRequestTokens = async (): Promise<{
   requestToken: string;
   requestTokenSecret: string;
 }> => {
+  // TODO: API LIMIT をチェックする (現状は internal server error 扱いになるはず)
   const { data } = await createAxios().post("/oauth/request_token");
 
   const tokens = Object.fromEntries(
@@ -76,18 +88,18 @@ export const getRequestTokens = async (): Promise<{
   );
 
   if (tokens.oauth_callback_confirmed !== "true") {
-    throw "Callback URL is not confirmed.";
+    throwTwitterAPIError("UNKNOWN_TWITTER_ERROR");
   }
 
   const requestToken = tokens.oauth_token;
   const requestTokenSecret = tokens.oauth_token_secret;
 
   if (typeof requestToken !== "string") {
-    throw "Request token is not provided.";
+    throwTwitterAPIError("UNKNOWN_TWITTER_ERROR");
   }
 
   if (typeof requestTokenSecret !== "string") {
-    throw "Request token secret is not provided.";
+    throwTwitterAPIError("UNKNOWN_TWITTER_ERROR");
   }
 
   return {
@@ -101,6 +113,7 @@ export const getAccessTokens = async (
   requestToken: string,
   tokenVerifier: string
 ): Promise<{ accessToken: string; accessTokenSecret: string }> => {
+  // TODO: API LIMIT をチェックする (現状は internal server error 扱いになるはず)
   const { data } = await createAxios(tokens).post(
     "/oauth/access_token",
     undefined,
@@ -116,11 +129,11 @@ export const getAccessTokens = async (
     Object.fromEntries(data.split("&").map((record) => record.split("=")));
 
   if (typeof accessToken !== "string") {
-    throw "Access token is not provided.";
+    throwTwitterAPIError("UNKNOWN_TWITTER_ERROR");
   }
 
   if (typeof accessTokenSecret !== "string") {
-    throw "Access token secret is not provided.";
+    throwTwitterAPIError("UNKNOWN_TWITTER_ERROR");
   }
 
   return {
@@ -148,51 +161,89 @@ const verifyCredentials = usingStoredToken<undefined, GetAccountResponse>(
 /** https://developer.twitter.com/en/docs/twitter-api/users/follows/api-reference/get-users-id-followers */
 const getFollowers = usingStoredToken<GetUsersRequest, GetUsersResponse>(
   (tokens, { id, pageToken }) =>
-    createAxios(tokens).get<GetUsersResponse>(`/2/users/${id}/followers`, {
-      params: {
-        pagination_token: pageToken,
-        max_results: 1000,
-      },
-    })
+    createAxios(tokens).get<GetUsersResponse>(
+      `https://api.twitter.com/2/users/${id}/followers`,
+      {
+        params: {
+          max_results: 1000,
+          ...(pageToken ? { pagination_token: pageToken } : {}),
+        },
+      }
+    )
 );
 
 /** https://developer.twitter.com/en/docs/twitter-api/users/follows/api-reference/get-users-id-following */
 const getFollowing = usingStoredToken<GetUsersRequest, GetUsersResponse>(
   (tokens, { id, pageToken }) =>
-    createAxios(tokens).get<GetUsersResponse>(`/2/users/${id}/following`, {
-      params: {
-        pagination_token: pageToken,
-        max_results: 1000,
-      },
-    })
+    createAxios(tokens).get<GetUsersResponse>(
+      `https://api.twitter.com/2/users/${id}/following`,
+      {
+        params: {
+          max_results: 1000,
+          ...(pageToken ? { pagination_token: pageToken } : {}),
+        },
+      }
+    )
 );
 
 export const twiffa = async (sessionId: string): Promise<TwiffaResult> => {
-  // TODO
-  return {
-    name: "Sample Account",
-    followers: [
-      {
-        id: "ID",
-        name: "Follower",
-        username: "@Follower",
-      },
-      {
-        id: "ID",
-        name: "Follower",
-        username: "@Follower",
-      },
-      {
-        id: "ID",
-        name: 'Fo"llower',
-        username: "@Follower",
-      },
-      {
-        id: "ID",
-        name: "Follower",
-        username: "@Follower",
-      },
-    ],
-    following: [],
+  const fetchAllPages = async (
+    fetch: (
+      sessionId: string,
+      args: GetUsersRequest
+    ) => Promise<GetUsersResponse>,
+    sessionId: string,
+    args: { id: string }
+  ): Promise<TwitterUser[]> => {
+    const result: TwitterUser[] = [];
+    let pageToken: string | undefined = undefined;
+
+    do {
+      const { data, meta } = await fetch(sessionId, { ...args, pageToken });
+
+      pageToken = meta.next_token;
+      result.push(...data);
+    } while (pageToken);
+
+    return result;
   };
+
+  try {
+    const { id_str: id, name } = await verifyCredentials(sessionId, undefined);
+    const following = await fetchAllPages(getFollowing, sessionId, {
+      id,
+    });
+    const followers = await fetchAllPages(getFollowers, sessionId, {
+      id,
+    });
+
+    return {
+      name,
+      following,
+      followers,
+    };
+  } catch (e) {
+    const getError = (): TwiffaError => {
+      if (!e.error) {
+        return "INTERNAL_SERVER_ERROR";
+      }
+
+      if (["NO_ACCESS_TOKEN", "INVALID_ACCESS_TOKEN"].includes(e.error)) {
+        return "NO_CREDENTIAL";
+      }
+
+      if (e.error === "API_LIMIT") {
+        return "API_LIMIT";
+      }
+
+      return "UNKNOWN_TWITTER_ERROR";
+    };
+
+    return {
+      name: "",
+      following: [],
+      followers: [],
+      error: getError(),
+    };
+  }
 };
