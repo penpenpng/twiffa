@@ -4,7 +4,7 @@ interface Prop {
   goAuthPage: () => void;
 }
 
-export const component: FunctionComponent<Prop> = ({ goAuthPage }) => {
+export const Component: FunctionComponent<Prop> = ({ goAuthPage }) => {
   return (
     <main className="w-screen flex flex-col items-center">
       <p>
@@ -19,4 +19,4 @@ export const component: FunctionComponent<Prop> = ({ goAuthPage }) => {
   );
 };
 
-export default component;
+export default Component;

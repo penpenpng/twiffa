@@ -1,7 +1,5 @@
 import Document, { Html, Head, Main, NextScript } from "next/document";
 
-import "../styles/global.css";
-
 type Props = {};
 
 class AppDocument extends Document<Props> {
@@ -16,7 +14,7 @@ class AppDocument extends Document<Props> {
             rel="stylesheet"
           />
         </Head>
-        <body>
+        <body className="bg-yellow-50">
           <Main />
           <NextScript />
         </body>

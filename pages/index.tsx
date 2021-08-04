@@ -21,7 +21,7 @@ const page: FunctionComponent<Props> = ({ twiffaResult }) => {
   if (!twiffaResult) return <div />;
 
   return (
-    <div className="h-screen bg-yellow-50">
+    <div className="h-screen">
       <Header />
       {twiffaResult.error === "NO_CREDENTIAL" ? (
         <Home goAuthPage={() => console.log("fetch!")} />

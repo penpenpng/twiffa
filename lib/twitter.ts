@@ -184,7 +184,7 @@ export const twiffa = async (sessionId: string): Promise<TwiffaResult> => {
       },
       {
         id: "ID",
-        name: "Follower",
+        name: 'Fo"llower',
         username: "@Follower",
       },
       {

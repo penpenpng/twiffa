@@ -13,6 +13,7 @@
   "dependencies": {
     "axios": "^0.21.1",
     "axios-oauth-1.0a": "^0.3.0",
+    "csv": "^5.5.0",
     "dotenv": "^10.0.0",
     "firebase": "^8.7.1",
     "next": "^11.0.0",
