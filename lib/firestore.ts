@@ -23,17 +23,7 @@ export const updateSessionRecord = async (
   sessionId: string,
   record: Partial<SessionRecord>
 ): Promise<void> => {
-  const olddoc = await table.doc(sessionId).get();
-
-  console.log(
-    `merge '${JSON.stringify(record)}' into '${JSON.stringify(olddoc.data())}'`
-  );
-
   await table.doc(sessionId).set(record, { merge: true });
-
-  const newdoc = await table.doc(sessionId).get();
-
-  console.log(`result in '${JSON.stringify(newdoc.data())}'`);
 };
 
 export const getSessionRecordByRequestToken = async (

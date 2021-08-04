@@ -15,8 +15,6 @@ const getSessionId = async (session: Session): Promise<string> => {
 
   await touchSessionRecord(sessionId);
 
-  console.log("session id:", sessionId);
-
   return sessionId;
 };
 
