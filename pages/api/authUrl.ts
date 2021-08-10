@@ -1,3 +1,4 @@
+import { error, isTwiffaError } from "../../lib/error";
 import { updateSessionRecord } from "../../lib/firestore";
 import { apiRouteWithSession } from "../../lib/session";
 import { getRedirectURL, getRequestTokens } from "../../lib/twitter";
@@ -22,11 +23,15 @@ const handler = apiRouteWithSession(async (sessionId, req, res) => {
         authUrl: getRedirectURL(tokens.requestToken),
       });
     } catch (e) {
-      if (e.error === "UNKNOWN_TWITTER_ERROR") {
-        res.status(500).json({ error: "UNKNOWN_TWITTER_ERROR" });
-      } else {
-        res.status(500).json({ error: "INTERNAL_SERVER_ERROR" });
-      }
+      const thrown =
+        isTwiffaError(e) && e.errorLayer === "public"
+          ? e
+          : error("UNHANDLED_ERROR");
+
+      res.status(500).json({
+        type: thrown.type,
+        description: thrown.description,
+      });
     }
   }
 });
