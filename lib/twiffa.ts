@@ -96,7 +96,7 @@ export const twiffa = async (sessionId: string): Promise<TwiffaResult> => {
       name: "",
       following: [],
       followers: [],
-      error: isTwiffaError(e) ? e : error("UNHANDLED_ERROR"),
+      error: isTwiffaError(e) ? e : error("UNHANDLED_ERROR", e),
     };
   }
 };

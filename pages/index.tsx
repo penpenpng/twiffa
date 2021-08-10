@@ -15,6 +15,7 @@ import Footer from "../components/Footer";
 import Home from "../components/Home";
 import Result from "../components/Result";
 import { error, getErrorDescription, isTwiffaError } from "../lib/error";
+import { omitUndefinedProps } from "../lib/prop";
 
 interface Props {
   twiffaResult: TwiffaResult;
@@ -27,10 +28,13 @@ const goAuthPage = async () => {
     validateStatus: () => true,
   });
 
-  if (data.authUrl) {
+  if (data.error) {
+    alert(`エラー: ${data.description || data.type}`);
+  } else if (data.authUrl) {
     window.location.href = data.authUrl;
   } else {
-    alert(`エラー: ${data.description || data.type}`);
+    // Only process.env.APP_ENV === "local"
+    window.location.reload();
   }
 };
 
@@ -96,7 +100,7 @@ export const getServerSideProps: GetServerSideProps<Props> =
         const thrown =
           isTwiffaError(e) && e.errorLayer === "public"
             ? e
-            : error("UNHANDLED_ERROR");
+            : error("UNHANDLED_ERROR", e);
 
         return {
           redirect: {
@@ -107,11 +111,13 @@ export const getServerSideProps: GetServerSideProps<Props> =
       }
     }
 
+    const props = omitUndefinedProps({
+      twiffaResult: await twiffa(sessionId),
+      carriedError: query.error as TwiffaErrorType | undefined,
+    });
+
     return {
-      props: {
-        twiffaResult: await twiffa(sessionId),
-        carriedError: (query.error as TwiffaErrorType | undefined) || null,
-      },
+      props,
     };
   });
 

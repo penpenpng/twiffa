@@ -42,11 +42,11 @@ const Errors: Record<
 export const error = (type: TwiffaErrorType, meta?: unknown): TwiffaError => ({
   _twiffaError: true,
   type,
-  meta,
+  meta: meta,
   ...Errors[type],
 });
 
-export const isTwiffaError = (obj: any): obj is TwiffaError => obj._appError;
+export const isTwiffaError = (obj: any): obj is TwiffaError => obj._twiffaError;
 
 export const getErrorDescription = (
   type: TwiffaErrorType

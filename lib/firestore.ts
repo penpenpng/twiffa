@@ -40,6 +40,14 @@ export const updateSessionRecord = async (
   }
 };
 
+export const deleteSessionRecord = async (sessionId: string): Promise<void> => {
+  try {
+    await table.doc(sessionId).delete();
+  } catch {
+    throw error("DATABASE_ERROR");
+  }
+};
+
 export const getSessionRecordByRequestToken = async (
   requestToken: string
 ): Promise<SessionRecord | undefined> => {

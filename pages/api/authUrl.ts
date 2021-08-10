@@ -11,7 +11,7 @@ const handler = apiRouteWithSession(async (sessionId, req, res) => {
     });
 
     res.status(200).json({
-      redirect: false,
+      authUrl: false,
     });
   } else {
     try {
@@ -26,9 +26,10 @@ const handler = apiRouteWithSession(async (sessionId, req, res) => {
       const thrown =
         isTwiffaError(e) && e.errorLayer === "public"
           ? e
-          : error("UNHANDLED_ERROR");
+          : error("UNHANDLED_ERROR", e);
 
       res.status(500).json({
+        error: true,
         type: thrown.type,
         description: thrown.description,
       });

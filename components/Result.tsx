@@ -1,9 +1,23 @@
 import { FunctionComponent, useState, useEffect } from "react";
 import { stringify } from "csv";
+import axios from "axios";
 
 interface Props {
   twiffaResult: TwiffaResult;
 }
+
+const logout = async () => {
+  // XXX: typing
+  const { data } = await axios.get("api/logout", {
+    validateStatus: () => true,
+  });
+
+  if (data.type || data.description) {
+    alert(`エラー: ${data.description || data.type}`);
+  } else {
+    window.location.reload();
+  }
+};
 
 export const Component: FunctionComponent<Props> = ({ twiffaResult }) => {
   const [state, setState] = useState<{
@@ -23,17 +37,23 @@ export const Component: FunctionComponent<Props> = ({ twiffaResult }) => {
   }, [twiffaResult]);
 
   return (
-    <main className="w-full flex flex-col md:flex-row justify-center items-center">
-      <div className="w-8/12 md:w-4/12">
-        <h2 className="text-2xl mb-2">フォロー</h2>
-        <CsvDownloadButton filename="following.csv" data={state.following} />
-        <UsersView data={state.following} />
+    <main className="w-full flex flex-col items-center">
+      <div className="w-full flex flex-col md:flex-row justify-center items-center">
+        <div className="w-8/12 md:w-4/12">
+          <h2 className="text-2xl mb-2">フォロー</h2>
+          <CsvDownloadButton filename="following.csv" data={state.following} />
+          <UsersView data={state.following} />
+        </div>
+        <div className="w-8/12 md:w-4/12 mt-8 md:mt-0 md:ml-16">
+          <h2 className="text-2xl mb-2">フォロワー</h2>
+          <CsvDownloadButton filename="followers.csv" data={state.followers} />
+          <UsersView data={state.followers} />
+        </div>
       </div>
-      <div className="w-8/12 md:w-4/12 mt-8 md:mt-0 md:ml-16">
-        <h2 className="text-2xl mb-2">フォロワー</h2>
-        <CsvDownloadButton filename="followers.csv" data={state.followers} />
-        <UsersView data={state.followers} />
-      </div>
+
+      <button className="mt-8" onClick={logout}>
+        ログアウトする
+      </button>
     </main>
   );
 };

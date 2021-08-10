@@ -7,7 +7,7 @@ interface Prop {
 export const Component: FunctionComponent<Prop> = ({ goAuthPage }) => {
   return (
     <main className="w-screen flex flex-col items-center">
-      <p>
+      <p className="mx-8">
         Twiffa はあなたの Twitter
         アカウントのフォロー/フォロワーの一覧を取得し、CSV 形式で出力します。
         利用には Twitter 認証が必要です。
