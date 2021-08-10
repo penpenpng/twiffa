@@ -40,8 +40,10 @@ const goAuthPage = async () => {
 
 const Page: FunctionComponent<Props> = ({ twiffaResult, carriedError }) => {
   useEffect(() => {
-    if (carriedError) {
-      alert(`エラー: ${getErrorDescription(carriedError)}`);
+    const error = carriedError || twiffaResult.error?.type;
+
+    if (error && error !== "VALID_TOKEN_NOT_FOUND") {
+      alert(`エラー: ${getErrorDescription(error)}`);
     }
   });
 
