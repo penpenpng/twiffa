@@ -44,7 +44,7 @@ const Page: FunctionComponent<Props> = ({ twiffaResult, carriedError }) => {
   return (
     <div className="h-screen">
       <Header />
-      {twiffaResult.error.type === "VALID_TOKEN_NOT_FOUND" ? (
+      {twiffaResult.error?.type === "VALID_TOKEN_NOT_FOUND" ? (
         <Home goAuthPage={goAuthPage} />
       ) : (
         <Result twiffaResult={twiffaResult} />
@@ -110,7 +110,7 @@ export const getServerSideProps: GetServerSideProps<Props> =
     return {
       props: {
         twiffaResult: await twiffa(sessionId),
-        carriedError: query.error as TwiffaErrorType | undefined,
+        carriedError: (query.error as TwiffaErrorType | undefined) || null,
       },
     };
   });
